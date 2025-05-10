@@ -50,4 +50,12 @@ public class VariantIdUDFTest {
         // ref and alt of same length > 1 (e.g., MNV)
         assertNull(udf.evaluate("1", 1L, "AG", "TC"));
     }
+
+    @Test
+    public void testRealVariant() {
+        //SELECT GET_VARIANT_ID('8', 83072965, 'G', 'A');
+        Long id = udf.evaluate("8", 83072965L, "G", "A");
+        assertNotNull(id);
+        assertTrue(id < 0);
+    }
 }

@@ -1,4 +1,5 @@
 package org.radiant;
+
 public class VariantIdUDF {
 
     private static final long SNV_FLAG = 1L << 63;
@@ -14,17 +15,17 @@ public class VariantIdUDF {
      * @return Encoded ID with MSB = 1 for SNV/deletion/micro-insertion, or null
      */
     public Long evaluate(String chrom, Long start, String ref, String alt) {
-        if (chrom == null || start == null || ref == null || alt == null) return null;
+        if (alt == null ||  alt.length() > 2 || chrom == null || start == null || ref == null ) return null;
 
         int chromNum = parseChromosome(chrom);
         if (chromNum < 1 || chromNum > 25) return null;
-        if (start < 1 || start > 9_999_999) return null;
+        if (start < 1 || start > 999_000_000L) return null;
 
         int altCode = 0;
         int lengthCode = 0;
 
-        int refLen = ref.length();
         int altLen = alt.length();
+        int refLen = ref.length();
 
         if (altLen == 1 && refLen == 1) {
             // SNV
@@ -44,7 +45,8 @@ public class VariantIdUDF {
         if (altCode < 0 || altCode > 4) return null;
 
         long encoded = 0L;
-        encoded |= ((long) chromNum) << (24 + 3 + 17);
+        // Layout: | chrom (5) | start (30) | alt (3) | length (17) | = 55 bits (+ MSB)
+        encoded |= ((long) chromNum) << (30 + 3 + 17);
         encoded |= (start << (3 + 17));
         encoded |= ((long) altCode) << 17;
         encoded |= lengthCode;
@@ -56,7 +58,8 @@ public class VariantIdUDF {
         switch (chrom.toUpperCase()) {
             case "X": return 23;
             case "Y": return 24;
-            case "M": case "MT": return 25; // Mitochondrial fallback (if needed)
+            case "M":
+            case "MT": return 25;
             default:
                 try {
                     int n = Integer.parseInt(chrom);
