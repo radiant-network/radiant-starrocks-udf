@@ -45,7 +45,11 @@ jobs:
       - name: Upload JAR to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          body: |
+            Auto-generated release from CI/CD.
+            Includes JAR with StarRocks UDFs.
           files: target/*-jar-with-dependencies.jar
-          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
