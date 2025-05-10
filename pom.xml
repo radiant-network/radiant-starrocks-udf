@@ -77,7 +77,7 @@
         <repository>
             <id>github</id>
             <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/yourorg/variant-udf</url>
+            <url>https://maven.pkg.github.com/radiant-network/radiant-starrocks-udf</url>
         </repository>
     </distributionManagement>
 </project>
