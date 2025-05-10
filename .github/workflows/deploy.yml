@@ -41,3 +41,10 @@ jobs:
         run: mvn deploy -DskipTests --batch-mode
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload JAR to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/*-jar-with-dependencies.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
