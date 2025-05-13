@@ -9,10 +9,10 @@ public class VariantIdUDF {
      * Encodes SNV, deletion, and micro-insertion variants into signed 64-bit IDs
      *
      * @param chrom Chromosome string (1–22, X, Y, M)
-     * @param start 1-based start position
-     * @param ref Reference allele (uppercase, e.g. "A")
-     * @param alt Alternate allele (uppercase, e.g. "T")
-     * @return Encoded ID with MSB = 1 for SNV/deletion/micro-insertion, or null
+     * @param start 1-based start position (≤ 999,000,000)
+     * @param ref Reference allele (e.g. "A")
+     * @param alt Alternate allele (e.g. "T")
+     * @return Encoded ID (MSB = 1 for SNV/deletion/micro-insertion), or null
      */
     public Long evaluate(String chrom, Long start, String ref, String alt) {
         if (alt == null ||  alt.length() > 2 || chrom == null || start == null || ref == null ) return null;
@@ -24,8 +24,8 @@ public class VariantIdUDF {
         int altCode = 0;
         int lengthCode = 0;
 
-        int altLen = alt.length();
         int refLen = ref.length();
+        int altLen = alt.length();
 
         if (altLen == 1 && refLen == 1) {
             // SNV
@@ -38,17 +38,18 @@ public class VariantIdUDF {
             altCode = baseCode(alt.charAt(1));
             lengthCode = 1;
         } else {
-            // Insertion or unhandled case
+            // Insertion or unsupported case
             return null;
         }
 
         if (altCode < 0 || altCode > 4) return null;
+        if (lengthCode > 33_554_431) return null;  // max for 25 bits
 
         long encoded = 0L;
-        // Layout: | chrom (5) | start (30) | alt (3) | length (17) | = 55 bits (+ MSB)
-        encoded |= ((long) chromNum) << (30 + 3 + 17);
-        encoded |= (start << (3 + 17));
-        encoded |= ((long) altCode) << 17;
+        // Bit layout: | chrom (5) | start (30) | alt (3) | length (25) = 63 bits
+        encoded |= ((long) chromNum) << (30 + 3 + 25);
+        encoded |= start << (3 + 25);
+        encoded |= ((long) altCode) << 25;
         encoded |= lengthCode;
 
         return SNV_FLAG | encoded;

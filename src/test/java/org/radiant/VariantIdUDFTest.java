@@ -52,6 +52,21 @@ public class VariantIdUDFTest {
     }
 
     @Test
+    public void testMaxStart() {
+        assertNotNull(udf.evaluate("1", 999_000_000L, "A", "T")); // max start
+        assertNull(udf.evaluate("1", 999_000_001L, "A", "T"));    // out of range
+    }
+
+    @Test
+    public void testMaxLength() {
+        String ref = "A".repeat(33_554_431); // Max length for 25 bits
+        assertNotNull(udf.evaluate("1", 123L, ref, "A"));
+
+        String tooLong = "A".repeat(33_554_432); // Too large
+        assertNull(udf.evaluate("1", 123L, tooLong, "A"));
+    }
+
+    @Test
     public void testRealVariant() {
         //SELECT GET_VARIANT_ID('8', 83072965, 'G', 'A');
         Long id = udf.evaluate("8", 83072965L, "G", "A");
@@ -59,3 +74,4 @@ public class VariantIdUDFTest {
         assertTrue(id < 0);
     }
 }
+
