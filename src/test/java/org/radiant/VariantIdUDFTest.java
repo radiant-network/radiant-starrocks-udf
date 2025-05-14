@@ -49,6 +49,14 @@ public class VariantIdUDFTest {
         assertNull(udf.evaluate("1", 1L, "A", "AGTC"));
         // ref and alt of same length > 1 (e.g., MNV)
         assertNull(udf.evaluate("1", 1L, "AG", "TC"));
+
+        // Indel
+        assertNull(udf.evaluate("1", 1L, "ATTTCG", "T"));
+        assertNull(udf.evaluate("1", 1L, "ATTTCG", "TC"));
+
+        // Unsupported allele
+        assertNull(udf.evaluate("1", 1L, "A", "*"));
+        assertNull(udf.evaluate("1", 1L, "AG", "*"));
     }
 
     @Test
@@ -56,6 +64,7 @@ public class VariantIdUDFTest {
         assertNotNull(udf.evaluate("1", 999_000_000L, "A", "T")); // max start
         assertNull(udf.evaluate("1", 999_000_001L, "A", "T"));    // out of range
     }
+
 
     @Test
     public void testMaxLength() {

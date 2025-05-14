@@ -10,12 +10,12 @@ public class VariantIdUDF {
      *
      * @param chrom Chromosome string (1–22, X, Y, M)
      * @param start 1-based start position (≤ 999,000,000)
-     * @param ref Reference allele (e.g. "A")
-     * @param alt Alternate allele (e.g. "T")
+     * @param ref   Reference allele (e.g. "A")
+     * @param alt   Alternate allele (e.g. "T")
      * @return Encoded ID (MSB = 1 for SNV/deletion/micro-insertion), or null
      */
     public Long evaluate(String chrom, Long start, String ref, String alt) {
-        if (alt == null ||  alt.length() > 2 || chrom == null || start == null || ref == null ) return null;
+        if (alt == null || alt.length() > 2 || chrom == null || start == null || ref == null) return null;
 
         int chromNum = parseChromosome(chrom);
         if (chromNum < 1 || chromNum > 25) return null;
@@ -32,6 +32,7 @@ public class VariantIdUDF {
             altCode = baseCode(alt.charAt(0));
         } else if (altLen == 1 && refLen > 1) {
             // Deletion
+            if (alt.charAt(0) != ref.charAt(0)) return null; // alt must match first base of ref
             lengthCode = refLen;
         } else if (altLen == 2 && refLen == 1) {
             // Micro-insertion
@@ -57,10 +58,13 @@ public class VariantIdUDF {
 
     private int parseChromosome(String chrom) {
         switch (chrom.toUpperCase()) {
-            case "X": return 23;
-            case "Y": return 24;
+            case "X":
+                return 23;
+            case "Y":
+                return 24;
             case "M":
-            case "MT": return 25;
+            case "MT":
+                return 25;
             default:
                 try {
                     int n = Integer.parseInt(chrom);
@@ -73,11 +77,16 @@ public class VariantIdUDF {
 
     private int baseCode(char base) {
         switch (base) {
-            case 'A': return 1;
-            case 'T': return 2;
-            case 'C': return 3;
-            case 'G': return 4;
-            default: return -1;
+            case 'A':
+                return 1;
+            case 'T':
+                return 2;
+            case 'C':
+                return 3;
+            case 'G':
+                return 4;
+            default:
+                return -1;
         }
     }
 }
