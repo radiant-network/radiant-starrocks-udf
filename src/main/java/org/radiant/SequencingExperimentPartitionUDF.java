@@ -19,8 +19,7 @@ public class SequencingExperimentPartitionUDF {
         if (sequencingTypeLimit == null) { return null; }
 
         if (currentPartitionCount >= sequencingTypeLimit) {
-            short body = (short) ((currentPartitionId & 0xFFFF) + 1);
-            return (currentPartitionId & 0xFFFF0000) | body;
+            return (currentPartitionId & 0xFFFF0000) | ((currentPartitionId & 0xFFFF) + 1);
         }
         return currentPartitionId;
     }
