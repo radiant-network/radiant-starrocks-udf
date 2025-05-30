@@ -22,10 +22,17 @@ class SequencingExperimentPartitionUDFTest {
     }
 
     @Test
+    void testMaxRange() {
+        udf = new SequencingExperimentPartitionUDF();
+        Integer result = udf.evaluate(0x0001FFFF, 100);
+        Assertions.assertNull(result);
+    }
+
+    @Test
     void test_wgs_ShouldIncrement() {
         udf = new SequencingExperimentPartitionUDF();
-        int result = udf.evaluate(0x00010001, 100);
-        Assertions.assertEquals(0x00010002, result);
+        int result = udf.evaluate(0x0001FFFE, 100);
+        Assertions.assertEquals(0x0001FFFF, result);
     }
 
     @Test

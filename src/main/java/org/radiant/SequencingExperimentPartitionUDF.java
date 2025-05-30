@@ -19,6 +19,9 @@ public class SequencingExperimentPartitionUDF {
         if (sequencingTypeLimit == null) { return null; }
 
         if (currentPartitionCount >= sequencingTypeLimit) {
+            // Sanity check for max range
+            if ((currentPartitionId & 0xFFFF) == 0xFFFF) { return null; }
+
             return (currentPartitionId & 0xFFFF0000) | ((currentPartitionId & 0xFFFF) + 1);
         }
         return currentPartitionId;
