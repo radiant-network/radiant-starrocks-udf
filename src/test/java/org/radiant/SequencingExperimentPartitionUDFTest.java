@@ -15,6 +15,13 @@ class SequencingExperimentPartitionUDFTest {
     }
 
     @Test
+    void testUnknownType() {
+        udf = new SequencingExperimentPartitionUDF();
+        Integer result = udf.evaluate(0x00030001, 1);
+        Assertions.assertNull(result);
+    }
+
+    @Test
     void test_wgs_ShouldIncrement() {
         udf = new SequencingExperimentPartitionUDF();
         int result = udf.evaluate(0x00010001, 100);
