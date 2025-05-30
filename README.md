@@ -14,3 +14,14 @@ Encodes genomic variants (SNV, deletion, micro-insertion) into 64-bit signed int
 
 ```java
 Long evaluate(String chrom, Long start, String ref, String alt)
+```
+
+###  ✅ `SequencingExperimentPartitionUDF`
+
+Computes the partition ID for sequencing experiments based on sequencing type and current partition count.
+
+**Signature:**
+
+```java
+Integer evaluate(String sequencingType, Integer currentPartitionId, Integer partitionCount)
+```
