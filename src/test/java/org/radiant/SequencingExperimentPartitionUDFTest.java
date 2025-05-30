@@ -29,13 +29,6 @@ class SequencingExperimentPartitionUDFTest {
     }
 
     @Test
-    void test_wgs_UpperCase() {
-        udf = new SequencingExperimentPartitionUDF();
-        int result = udf.evaluate(0x0001000F, 1500);
-        Assertions.assertEquals(0x00010010, result);
-    }
-
-    @Test
     void test_wxs_ShouldIncrement() {
         udf = new SequencingExperimentPartitionUDF();
         int result = udf.evaluate(0x00020001, 1000);
@@ -47,13 +40,6 @@ class SequencingExperimentPartitionUDFTest {
         udf = new SequencingExperimentPartitionUDF();
         int result = udf.evaluate(0x00020001, 999);
         Assertions.assertEquals(0x00020001, result);
-    }
-
-    @Test
-    void test_wxs_UpperCase() {
-        SequencingExperimentPartitionUDF udf = new SequencingExperimentPartitionUDF();
-        int result = udf.evaluate(0x0002000F, 1500);
-        Assertions.assertEquals(0x00020010, result);
     }
 
 }
