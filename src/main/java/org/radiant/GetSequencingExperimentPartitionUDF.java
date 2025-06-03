@@ -1,9 +1,9 @@
 package org.radiant;
 
-public class SequencingExperimentPartitionUDF {
+public class GetSequencingExperimentPartitionUDF {
 
-    private static final short WGS_TYPE_ID = 1;
-    private static final short WXS_TYPE_ID = 2;
+    private static final short WGS_TYPE_ID = 0;
+    private static final short WXS_TYPE_ID = 1;
 
     private static final java.util.Map<Short, Integer> SEQUENCING_TYPE_LIMIT_MAP = java.util.Map.of(
             WGS_TYPE_ID, 100,

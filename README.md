@@ -16,7 +16,7 @@ Encodes genomic variants (SNV, deletion, micro-insertion) into 64-bit signed int
 Long evaluate(String chrom, Long start, String ref, String alt)
 ```
 
-###  ✅ `SequencingExperimentPartitionUDF`
+###  ✅ `GetSequencingExperimentPartitionUDF`
 
 Computes the partition ID for sequencing experiments based on the current partition (containing the type mask) and current partition count.
 
@@ -24,6 +24,16 @@ Computes the partition ID for sequencing experiments based on the current partit
 
 ```java
 Integer evaluate(Integer currentPartitionId, Integer partitionCount)
+```
+
+###  ✅ `InitSequencingExperimentPartitionUDF`
+
+Computes the initial partition ID for sequencing experiments based on an experimental strategy type.
+
+**Signature:**
+
+```java
+Integer evaluate(string experimentalStrategy)
 ```
 
 
