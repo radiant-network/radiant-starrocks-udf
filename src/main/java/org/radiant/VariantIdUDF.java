@@ -17,7 +17,7 @@ public class VariantIdUDF {
     public Long evaluate(String chrom, Long start, String ref, String alt) {
         if (alt == null || alt.length() > 2 || chrom == null || start == null || ref == null) return null;
 
-        int chromNum = parseChromosome(chrom);
+        int chromNum = Utils.parseChromosome(chrom);
         if (chromNum < 1 || chromNum > 25) return null;
         if (start < 1 || start > 999_000_000L) return null;
 
@@ -56,24 +56,7 @@ public class VariantIdUDF {
         return SNV_FLAG | encoded;
     }
 
-    private int parseChromosome(String chrom) {
-        switch (chrom.toUpperCase()) {
-            case "X":
-                return 23;
-            case "Y":
-                return 24;
-            case "M":
-            case "MT":
-                return 25;
-            default:
-                try {
-                    int n = Integer.parseInt(chrom);
-                    return (n >= 1 && n <= 22) ? n : -1;
-                } catch (NumberFormatException e) {
-                    return -1;
-                }
-        }
-    }
+
 
     private int baseCode(char base) {
         switch (base) {
