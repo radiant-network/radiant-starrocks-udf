@@ -58,10 +58,11 @@ This design allows multiple encoding strategies to **coexist safely** within the
 - `1xxxx…` → Standard small variant ID (`VariantIdUDF`)
 - `0xxxx…` → Alternative or extended encoding (e.g., lookup table or long variant reference)
 
-**Performance Consideration**:
+**Performance Consideration:**
 
 We limit the encoding to **63 bits** because CPU with **64-bit architectures** can compare 64-bit integers using **a single CPU instruction**.
 If the encoding exceeded 64 bits, comparisons would require multiple instructions, resulting in slower joins, sorts, and aggregations in the database.
+
 ---
 
 ### 🧩 Bit Layout Diagram
