@@ -59,17 +59,12 @@ public class VariantIdUDF {
 
 
     private int baseCode(char base) {
-        switch (base) {
-            case 'A':
-                return 1;
-            case 'T':
-                return 2;
-            case 'C':
-                return 3;
-            case 'G':
-                return 4;
-            default:
-                return -1;
-        }
+        return switch (Character.toUpperCase(base)) {
+            case 'A' -> 1;
+            case 'T' -> 2;
+            case 'C' -> 3;
+            case 'G' -> 4;
+            default -> -1;
+        };
     }
 }
