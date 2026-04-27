@@ -92,14 +92,14 @@ public class VariantIdUDFTest {
     }
 
     @Test
-    public void testDeletionAnchorMismatch() {
+    public void testDeletionIndel() {
         // alt[0] must match ref[0] — deletion anchor base
         assertNull(udf.evaluate("1", 100L, "ATG", "T"));
         assertNull(udf.evaluate("1", 100L, "GCC", "C"));
     }
 
     @Test
-    public void testMicroInsertionAnchorMatch() {
+    public void testInsertionIndel() {
         // alt[0] == ref[0] — valid micro-insertion
         assertNotNull(udf.evaluate("1", 100L, "A", "AT"));
         assertNotNull(udf.evaluate("1", 100L, "G", "GC"));

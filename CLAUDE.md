@@ -40,7 +40,7 @@ Output JAR: `target/radiant-starrocks-udf-<version>-jar-with-dependencies.jar`
 - MSB=1 distinguishes UDF-encoded IDs from lookup-table IDs (MSB=0) sharing same column
 - `alt`: A=1, T=2, C=3, G=4 (SNV/micro-insertion only); 0 for deletions
 - `length`: deletion ref-length or 1 for micro-insertion; 0 for SNV; max 33,554,431 (25 bits)
-- Rejects: insertions >1 bp, MNVs, unknown bases
+- Rejects: insertions >1 bp, MNVs, unknown bases, indel
 
 ### CNVIdUDF — 64-bit layout
 
