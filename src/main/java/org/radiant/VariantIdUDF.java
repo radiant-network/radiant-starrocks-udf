@@ -30,11 +30,10 @@ public class VariantIdUDF {
         if (altLen == 1 && refLen == 1) {
             // SNV
             altCode = baseCode(alt.charAt(0));
-        } else if (altLen == 1 && refLen > 1) {
+        } else if (altLen == 1 && refLen > 1 && (alt.charAt(0) == ref.charAt(0))) {
             // Deletion
-            if (alt.charAt(0) != ref.charAt(0)) return null; // alt must match first base of ref
             lengthCode = refLen;
-        } else if (altLen == 2 && refLen == 1) {
+        } else if (altLen == 2 && refLen == 1 && (alt.charAt(0) == ref.charAt(0))) {
             // Micro-insertion
             altCode = baseCode(alt.charAt(1));
             lengthCode = 1;
