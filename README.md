@@ -81,13 +81,14 @@ If the encoding exceeded 64 bits, comparisons would require multiple instruction
 
 ## 🧬 Supported Variant Types
 
-| Variant Type               | Example                             | Supported? | Notes                                      |
-|----------------------------|-------------------------------------|-------------|--------------------------------------------|
-| **SNV**                    | `1-12345-A-T`                       | ✅ | Fully supported.                           |
-| **Deletion**               | `1-12345-ATG-A`                     | ✅ | Any length deletion supported.             |
-| **Micro‑Insertion (1 bp)** | `1-12345-A-AT`                      | ✅ | Single‑base insertion only.                |
-| **Insertion >1 bp**        | `1-12345-A-ATG`                     | ❌ | Too large for encoding; handled by lookup. |
-| **Others chromosome**      | Others cromosome than 1-22, X, Y, M | ❌ | Too large for encoding; handled by lookup. |
+| Variant Type               | Example                             | Supported? | Notes                                       |
+|----------------------------|-------------------------------------|------------|---------------------------------------------|
+| **SNV**                    | `1-12345-A-T`                       | ✅          | Fully supported.                            |
+| **Deletion**               | `1-12345-ATG-A`                     | ✅          | Any length deletion supported.              |
+| **Micro‑Insertion (1 bp)** | `1-12345-A-AT`                      | ✅          | Single‑base insertion only.                 |
+| **Insertion >1 bp**        | `1-12345-A-ATG`                     | ❌          | Too large for encoding; handled by lookup.  |
+| **Others chromosome**      | Others cromosome than 1-22, X, Y, M | ❌          | Too large for encoding; handled by lookup.  |
+| **Indel**                  | `G` -> `TT`                         | ❌          | Special cases.                              | 
 
 **Note:**  
 Variants that are not supported by this encoding (e.g., insertions >1 bp or non-standard chromosomes) will result in a `NULL` return value.  
