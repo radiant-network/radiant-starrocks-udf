@@ -1,0 +1,30 @@
+name: Publish UDF JAR to S3
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::311752058468:role/qlin-udf-push
+          aws-region: ca-central-1
+
+      - name: Download and upload JAR to S3
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+          JAR="radiant-starrocks-udf-${VERSION}-jar-with-dependencies.jar"
+          curl -fsSL \
+            "https://github.com/radiant-network/radiant-starrocks-udf/releases/download/${{ github.event.release.tag_name }}/${JAR}" \
+            -o "${JAR}"
+          aws s3 cp "${JAR}" "s3://starrocks-binaries-311752058468-ca-central-1/udf/${JAR}"
+          echo "Uploaded: s3://starrocks-binaries-311752058468-ca-central-1/udf/${JAR}"
+        env:
+          GH_TOKEN: ${{ github.token }}
