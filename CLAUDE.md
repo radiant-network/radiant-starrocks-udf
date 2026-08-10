@@ -8,7 +8,7 @@ Custom Java UDFs for [StarRocks](https://starrocks.io/), focused on genomics dat
 
 UDFs:
 - `VariantIdUDF` — SNV, deletion, micro-insertion (1 bp)
-- `CNVIdUDF` — copy-number variants (`<DEL>` / `<DUP>`)
+- `CNVIdUDF` — copy-number variant segments, keyed on CNV type (`LOSS` / `GAIN` / `CNLOH` / `GAINLOH`)
 - `Utils.parseChromosome` — shared chromosome-string → int (1–25)
 
 ## Build Commands
@@ -29,7 +29,7 @@ Output JAR: `target/radiant-starrocks-udf-<version>-jar-with-dependencies.jar`
 - **Tests**: JUnit 5 in `src/test/java/org/radiant/`, one test class per UDF
 - All UDFs return `null` on invalid/unsupported input — StarRocks treats null as "fall back to lookup table"
 - Chromosomes (`Utils.parseChromosome`): 1–22 numeric, X→23, Y→24, M/MT→25; else `-1`
-- Position bound: `start ∈ [1, 999_000_000]`
+- Position bound: `start ∈ [1, 999_000_000]` in `VariantIdUDF` (30-bit field), `[1, 268_435_455]` in `CNVIdUDF` (28-bit field)
 
 ### VariantIdUDF — 64-bit layout
 
@@ -45,11 +45,17 @@ Output JAR: `target/radiant-starrocks-udf-<version>-jar-with-dependencies.jar`
 ### CNVIdUDF — 64-bit layout
 
 ```
-| type (1) | chrom (5) | start (30) | length (28) |
+| type (3) | chrom (5) | start (28) | length (28) |
 ```
 
-- `type` MSB: 1 = LOSS (`<DEL>`), 0 = GAIN (`<DUP>`)
-- Only `<DEL>` / `<DUP>` accepted as `alt`
+- `type`: LOSS=0, GAIN=1, CNLOH=2, GAINLOH=3; codes 4–7 reserved. Case-sensitive, upper case only
+- Keyed on the **resolved CNV type**, not the VCF `alternate` — DRAGEN 4.2 spells LOH as `<DEL>,<DUP>`
+  and 4.4 as `<LOH>`, so an ALT-keyed ID would differ per caller version for the same segment
+- Codes 0–3 leave bit 63 clear, so **every CNV ID is positive** while all `VariantIdUDF` IDs are
+  negative (MSB=1) — the two encodings can share a column without colliding
+- `start` and `length` both bounded at 268,435,455 (28 bits), sized to the largest human chromosome
+- Changed in v1.3.0 (SJRA-1777): was `| type (1) | chrom (5) | start (30) | length (28) |` keyed on
+  `<DEL>`/`<DUP>`. IDs from ≤ v1.2.1 are not comparable
 
 ## CI/CD
 

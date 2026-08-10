@@ -207,4 +207,158 @@ This allows both UDF‑encoded and lookup‑encoded IDs to coexist in the same s
 | Group By | High CPU | **Efficient (integer hash)** |
 | Storage | KBs per row | **Bytes per row**            |
 
+---
+
+# 🧬 CNV ID Encoding Function (`CNVIdUDF`)
+
+## Overview
+
+The **`CNVIdUDF`** generates **deterministic 64-bit integer identifiers** for copy-number variant
+segments, playing the same role for CNV that `VariantIdUDF` plays for small variants.
+
+A CNV segment is identified by its **chromosome, start, length and type** — there is no ref/alt pair
+to encode, and the segment can span an entire chromosome arm.
+
+---
+
+## ⚙️ How It Works
+
+| Bit Range | Field          | Description                                                                        |
+|-----------|----------------|------------------------------------------------------------------------------------|
+| 0–27      | **Length**     | 28‑bit segment length. Max = 268,435,455 bp                                        |
+| 28–55     | **Start**      | 28‑bit position within chromosome. Max = 268,435,455                               |
+| 56–60     | **Chromosome** | Encodes `1`–`22`, `X`, `Y`, `M` using 5 bits.                                       |
+| 61–63     | **Type**       | 3‑bit CNV type. Values `0`–`3` are assigned; `4`–`7` are reserved for future types. |
+
+### 🧩 Bit Layout Diagram
+
+```
+ 63          61 60      56 55                     28 27                      0
+ +-------------+----------+-------------------------+------------------------+
+ |    TYPE     |  CHROM   |          START          |        LENGTH          |
+ +-------------+----------+-------------------------+------------------------+
+       3b           5b               28b                      28b
+```
+
+### 🧠 Why 28 Bits for Both Coordinates?
+
+`start` and `length` are bounded by the same biological constant — the largest human chromosome,
+chr1 at 248,956,422 bp — so 28 bits (268,435,455) is the natural size for each, with ~7.8 % headroom
+against a value that does not grow.
+
+The other fields have no slack to give:
+
+- **`chromosome` cannot shrink** — 25 values are needed (`1`–`22`, `X`, `Y`, `M`); 4 bits gives 16.
+- **`length` cannot shrink.** At 27 bits the ceiling is 134,217,727 (~134 Mb), which truncates
+  whole-chromosome events on chr1–9, chr11 and chrX, plus arm-level events on chr2 q and chr4 q —
+  precisely the aneuploidy and arm-level events somatic CNV is full of. The boundary also falls
+  mid-karyotype (chr11 overflows while chr10 and chr12 fit), so such a bug would pass or fail
+  depending on which chromosome was tested.
+
+---
+
+## 🧬 Supported CNV Types
+
+The type field is keyed on the **resolved CNV type**, not on the VCF alternate allele. DRAGEN 4.2
+spells an LOH event as multi-allelic `<DEL>,<DUP>` while 4.4 spells it `<LOH>` — an ALT-keyed ID
+would give the same biological segment two different IDs depending on the caller version.
+
+| `type`    | Code | Typical ALT              | Notes                            |
+|-----------|------|--------------------------|----------------------------------|
+| `LOSS`    | `0`  | `<DEL>`                  | Copy-number loss.                |
+| `GAIN`    | `1`  | `<DUP>`                  | Copy-number gain.                |
+| `CNLOH`   | `2`  | `<LOH>` / `<DEL>,<DUP>`  | Copy-neutral loss of heterozygosity. |
+| `GAINLOH` | `3`  | `<LOH>` / `<DEL>,<DUP>`  | Gain with loss of heterozygosity. |
+
+Matching is **case-sensitive** and expects the upper-case form.
+
+### ✳️ Coexistence with `VariantIdUDF`
+
+Because only codes `0`–`3` are assigned, **bit 63 stays clear and every CNV ID is positive**.
+`VariantIdUDF` always sets bit 63, so its IDs are negative. The two encodings are therefore disjoint
+and can safely share a column. Only a future type in the `4`–`7` range would set the sign bit.
+
+---
+
+## 🚀 Usage
+
+In StarRocks SQL, you can install the udf with:
+```sql
+CREATE OR REPLACE
+    GLOBAL FUNCTION GET_CNV_ID
+(
+    string,
+    bigint,
+    bigint,
+    string
+) RETURNS bigint
+    PROPERTIES
+(
+    "symbol" =
+    "org.radiant.CNVIdUDF",
+    "type" =
+    "StarrocksJar",
+    "file" =
+    "https://github.com/radiant-network/radiant-starrocks-udf/releases/download/v1.3.0/radiant-starrocks-udf-1.3.0-jar-with-dependencies.jar"
+);
+```
+
+Then, use it as follows:
+```sql
+SELECT GET_CNV_ID(
+  '1',        -- chromosome
+  1000,       -- start position
+  500,        -- length
+  'GAIN'      -- CNV type
+) AS cnv_id;
+```
+
+Example output:
+```
+cnv_id
+---------------------
+2377900871687078388
+```
+
+Segments whose type is not recognised, or whose coordinates fall outside the encodable range, return
+null:
+
+```sql
+SELECT GET_CNV_ID('1', 1000, 500, 'UNKNOWN') AS cnv_id;
+```
+
+Result :
+```
+cnv_id
+---------------
+NULL
+```
+
+**Handle nulls upstream.** `cnv_id` is typically declared `bigint NOT NULL` and used in a
+`DUPLICATE KEY`, so a null does not degrade to an "unknown" row — it fails the load. Callers should
+skip records whose type cannot be resolved rather than rely on the UDF to absorb them.
+
+---
+
+## ⚠️ Breaking Change in v1.3.0
+
+Prior to `v1.3.0` the type field was a **single bit** derived from the **alternate allele**
+(`<DEL>` → 1, `<DUP>` → 0), with `start` occupying 30 bits:
+
+```
+encoded = (isLoss << 63) | (chrom << 58) | (start << 28) | length
+```
+
+`v1.3.0` widens the type field to 3 bits, taking the 2 extra bits from `start`, and switches the
+4th argument from `alternate` to `type`. Consequences:
+
+- **IDs produced by ≤ `v1.2.1` are not comparable to `v1.3.0` IDs.** Every existing `cnv_id` changes,
+  from both the layout move and the sign convention. Stored or bookmarked IDs go stale and need a
+  backfill.
+- **`<DEL>` / `<DUP>` are no longer accepted** and return null. The SQL argument list is unchanged
+  (`string, bigint, bigint, string`), so call sites must be updated to pass `type` in the 4th slot.
+- **`start` is now bounded at 268,435,455**, down from the previous 999,000,000 guard.
+- **`length` is now range-checked.** Earlier versions had no upper bound, so a length ≥ 2²⁸ silently
+  overflowed into the `start` field and produced a wrong, colliding ID.
+
 
